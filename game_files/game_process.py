@@ -1,35 +1,56 @@
 import pygame
-from PIL import Image
-import os
 
 
-def split_animated_gif(gif_file_path):
-    ret = []
-    gif = Image.open(gif_file_path)
-    for frame_index in range(gif.n_frames):
-        gif.seek(frame_index)
-        frame_rgba = gif.convert("RGBA")
-        pygame_image = pygame.image.fromstring(
-            frame_rgba.tobytes(), frame_rgba.size, frame_rgba.mode
-        )
-        ret.append(pygame_image)
-    return ret
+class Land(pygame.sprite.Sprite):
+    def __init__(self, width, height):
+        super().__init__(lands_sprites)
+        self.image = pygame.image.load('sprites\\platforms.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = width
+        self.rect.y = height
 
 
-class BattleField:
-    def __init__(self, screen):
-        self.fon = split_animated_gif('BG_gif.gif')
-        self.screen = screen
+class Field:
 
-    def renew(self, k):
-        for i in self.fon:
-            image = pygame.transform.scale(self.fon[k], (width, height))
-            self.screen.blit(image, (0, 0))
+    def __init__(self, main_screen):
+        self.screen = main_screen
+        self.frame = 0
+        self.bg = pygame.image.load("BG_frames\\Frame_" + str(self.frame) + ".gif").convert_alpha()
+        self.bg = pygame.transform.scale(self.bg, (800, 400))
+        screen.blit(self.bg, (0, 0))
+        pygame.display.flip()
 
 
 if __name__ == '__main__':
     pygame.init()
-    size = width, height = 800, 400
-    screen = pygame.display.set_mode(size)
-    field = BattleField(screen)
+    screen = pygame.display.set_mode((800, 400))
+    lands_sprites = pygame.sprite.Group()
+
+    field = Field(screen)
+    for i in range(0, 800, 50):
+        Land(i, 350)
+
+    lands_sprites.draw(field.screen)
+    pygame.display.flip()
+    bg_changer = pygame.time.Clock()
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        if bg_changer.tick() % 2 == 0:
+            if field.frame != 534:
+                field.frame += 1
+                field.bg = pygame.image.load("BG_frames\\Frame_" + str(field.frame) + ".gif").convert_alpha()
+                field.bg = pygame.transform.scale(field.bg, (800, 400))
+                field.screen.blit(field.bg, (0, 0))
+                lands_sprites.draw(field.screen)
+                pygame.display.flip()
+            else:
+                field.frame = 0
+                field.bg = pygame.image.load("BG_frames\\Frame_" + str(field.frame) + ".gif").convert_alpha()
+                field.bg = pygame.transform.scale(field.bg, (800, 400))
+                field.screen.blit(field.bg, (0, 0))
+                lands_sprites.draw(field.screen)
+                pygame.display.flip()
     pygame.quit()
