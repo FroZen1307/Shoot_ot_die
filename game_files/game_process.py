@@ -160,5 +160,4 @@ if __name__ == '__main__':
         player_one.gravity()
         player_one.jump()
         player_one.moving()
-        pygame.image.save(player_one.frames[0], 'frame_person.png')
     pygame.quit()
