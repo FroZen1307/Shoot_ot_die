@@ -70,9 +70,10 @@ class PlayerOne(pygame.sprite.Sprite):
 
     def jump(self):
         if pygame.key.get_pressed()[pygame.K_w] and self.allow == 1:
-            jump_power = 100
-            if jump_power > 0:
-                self.rect.y -= jump_power
+            jump_power = 17
+            while jump_power > 0:
+                for i in range(jump_power):
+                    self.rect.y -= 1
                 jump_power -= 1
             self.allow = 0
 
