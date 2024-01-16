@@ -28,6 +28,30 @@ def split_animated_gif(gif_file_path):
     return ret
 
 
+# функция для написания правил
+def write_rules(screen):
+    rules = ['Задача каждого из игроков - убить другого игрока',
+             'Используйте оружие дальнего и ближнего боя, передвигайтесь, прыгайте',
+             'Управление для первого игрока: W - прыгать, A - идти влево, D - идти вправо,',
+             'F - бить (ближним оружием), G - стрелять (дальним оружием)',
+             'Управление для второго игрока: стрелка вверх - прыгать, cтрелка "<" - идти влево, стрелка ">" -',
+             '- идти вправо, ,(Б) - бить (ближним оружием), .(Ю) - стрелять (дальним оружием)',
+             'У игроков по 3 жизни, один выстрел (попавший в игрока) отнимает одну жизнь!']
+    coords = [50, 60]
+    font = pg.font.Font(None, 20)
+    for i in range(len(rules)):
+        if i == len(rules) - 3:
+            text = font.render(rules[i], True, (0, 0, 0))
+            screen.blit(text, coords)
+            coords[1] += 50
+            # сдвигаем по иксу, чтобы кнопка 'Back' не мешала
+            coords[0] += 155
+        else:
+            text = font.render(rules[i], True, (0, 0, 0))
+            screen.blit(text, coords)
+            coords[1] += 50
+
+
 SIZE_OF_BUTTON = (200, 100)
 
 
@@ -73,9 +97,8 @@ class StartScreen:
         self.screen = screen
 
     def renew(self, k):
-        for i in self.fon:
-            image = pg.transform.scale(self.fon[k], (width, height))
-            self.screen.blit(image, (0, 0))
+        image = pg.transform.scale(self.fon[k], (width, height))
+        self.screen.blit(image, (0, 0))
 
     def len_of_cadrs(self):
         return len(self.fon) - 1
@@ -149,7 +172,7 @@ if __name__ == '__main__':
     image_2 = load_image('name.png', (255, 255, 255))
     pg.mixer.music.load("music.mp3")
     pg.mixer.music.play(-1)
-    image_rules = pg.transform.scale(load_image('rules.png'), (width, height))
+    image_rules = pg.transform.scale(load_image('rules_fon.jpg'), (width, height))
 
     while running:
         # задний фон - гиф-картинка, поэтому она должна обновляться
@@ -177,6 +200,7 @@ if __name__ == '__main__':
                                 if button_home.button_rect().collidepoint(pg.mouse.get_pos()):
                                     running_rules = 0
                         screen.blit(image_rules, (0, 0))
+                        write_rules(screen)
                         sprite_home.draw(screen)
                         pg.display.flip()
                         clock.tick(fps)
@@ -229,6 +253,11 @@ if __name__ == '__main__':
             elif event.type == pg.KEYDOWN:
                 if event.key in [pg.K_LSHIFT, pg.K_RSHIFT]:
                     shift = True
+                elif event.key == pg.K_BACKSPACE:
+                    if first and len(txt1) >= 1:
+                        txt1 = txt1[:-1]
+                    elif second and len(txt2) >= 1:
+                        txt2 = txt2[:-1]
                 else:
                     for i in range(26):
                         if event.key == getattr(pg, 'K_' + chr(ord('a') + i)):
