@@ -34,7 +34,7 @@ class PlayerOne(pygame.sprite.Sprite):
         self.cut_sheet()
         self.image = pygame.Surface((48, 48))
         self.image.fill(pygame.Color(pygame.color.Color('black')))
-        #self.image = pygame.transform.scale(self.frames[self.cur_frame], (100, 100))
+        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 130))
         self.position = [50, 200]
         self.rect = pygame.Rect(50, 200, 48, 48)
         self.last_dir = 'right'
