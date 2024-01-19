@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 from PIL import Image
+# from game_process import *
 
 
 def load_image(name, colorkey=None):
@@ -146,6 +147,7 @@ if __name__ == '__main__':
     pg.init()
     size = width, height = 800, 400
     screen = pg.display.set_mode(size)
+    pg.display.set_caption('Shoot or die')
 
     pressed_start = False
     running = -1
@@ -160,7 +162,7 @@ if __name__ == '__main__':
     second_page_sprite_group = pg.sprite.Group()
     start_screen = StartScreen(screen)
     nicknames_screen = NicknamesScreen(screen)
-    # кнопка 'play'
+    # кнопка 'play', которая преносит на экран ввода ников
     button_play = Button(load_image('buttons_start.png', -1), 1, 2, width // 2 - 100, height // 2 - 100, False, all_sprites)
     # кнопка 'exit'
     button_exit = Button(load_image('exit.png', -1), 1, 1, width // 2 - 100, height - 200, False, all_sprites)
@@ -186,6 +188,9 @@ if __name__ == '__main__':
                     button_play = Button(load_image('buttons_start.png', -1), 1, 2, width // 2 - 100, height // 2 - 100, True, all_sprites)
                     pressed_start = True
                     running = 2
+                    # стираем все ники перед началом новой игры
+                    f = open('results.txt', 'r+')
+                    f.truncate(0) # need '0' when using r+
                 elif button_exit.button_rect().collidepoint(pg.mouse.get_pos()):
                     button_exit.terminate()
                 else:
@@ -216,9 +221,9 @@ if __name__ == '__main__':
         cur_cadr_of_gif = (cur_cadr_of_gif + 1) % start_screen.len_of_cadrs()
     if pressed_start:
         running = -1
-    # ники
-    txt1 = ''
-    txt2 = ''
+    # ники по умолчанию
+    nick1 = 'Player1'
+    nick2 = 'Player2'
     font = pg.font.Font(None, 50)
     text = font.render("введите ник!", True, (85, 137, 230))
     # флажки, которые показывают, в в каком прямоугольнике мы печатаем
@@ -228,12 +233,12 @@ if __name__ == '__main__':
     while running:
         nicknames_screen.renew()
         screen.blit(text, (width // 2 - text.get_width() // 2, 20))
-        first_box = InputBox((176, 172, 173), 50, 90, 250, 35, screen)
-        second_box = InputBox((176, 172, 173), 500, 90, 250, 35, screen, 2)
-        nick1 = font.render(txt1, True, (168, 224, 229))
-        screen.blit(nick1, (53, 90))
-        nick2 = font.render(txt2, True, (168, 224, 229))
-        screen.blit(nick2, (503, 90))
+        first_box = InputBox((176, 172, 173), 50, 90, 290, 35, screen)
+        second_box = InputBox((176, 172, 173), 500, 90, 290, 35, screen, 2)
+        txt1 = font.render(nick1, True, (168, 224, 229))
+        screen.blit(txt1, (53, 90))
+        txt2 = font.render(nick2, True, (168, 224, 229))
+        screen.blit(txt2, (503, 90))
         button_start = Button(load_image('second_start.png', -1), 1, 1, width - 200, height - 100, False, second_page_sprite_group)
         second_page_sprite_group.update()
         second_page_sprite_group.draw(screen)
@@ -242,22 +247,35 @@ if __name__ == '__main__':
                 running = 1
             elif event.type == pg.MOUSEBUTTONDOWN:
                 if first_box.get_rect().collidepoint(pg.mouse.get_pos()):
+                    # обновляем ники если пользователь начнёт их вводить
+                    if nick1 == 'Player1':
+                        nick1 = ''
                     first = True
                     second = False
                 elif second_box.get_rect().collidepoint(pg.mouse.get_pos()):
+                    # обновляем ники если пользователь начнёт их вводить
+                    if nick2 == 'Player2':
+                        nick2 = ''
                     second = True
                     first = False
-                #  если пользователь нажали на кнопку 'start'
+                #  если пользователь нажали на кнопку 'start'\
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 elif button_start.button_rect().collidepoint(pg.mouse.get_pos()):
-                    pass
+                    if nick1 == '':
+                        nick1 = 'Player1'
+                    if nick2 == '':
+                        nick2 = 'Player2'
+                    # записываем ники игроков перед началом игры
+                    with open('results.txt', 'w', encoding='utf-8') as statistic:
+                        statistic.write(f'{nick1} {nick2}')
             elif event.type == pg.KEYDOWN:
                 if event.key in [pg.K_LSHIFT, pg.K_RSHIFT]:
                     shift = True
                 elif event.key == pg.K_BACKSPACE:
-                    if first and len(txt1) >= 1:
-                        txt1 = txt1[:-1]
-                    elif second and len(txt2) >= 1:
-                        txt2 = txt2[:-1]
+                    if first and len(nick1) >= 1:
+                        nick1 = nick1[:-1]
+                    elif second and len(nick2) >= 1:
+                        nick2 = nick2[:-1]
                 else:
                     for i in range(26):
                         if event.key == getattr(pg, 'K_' + chr(ord('a') + i)):
@@ -265,10 +283,10 @@ if __name__ == '__main__':
                                 letter = chr(ord('a') + i).upper()
                             else:
                                 letter = chr(ord('a') + i)
-                            if first and len(txt1) <= 11:
-                                txt1 += letter
-                            elif second and len(txt2) <= 11:
-                                txt2 += letter
+                            if first and len(nick1) <= 11:
+                                nick1 += letter
+                            elif second and len(nick2) <= 11:
+                                nick2 += letter
             elif event.type == pg.KEYUP:
                 if event.key in [pg.K_LSHIFT, pg.K_RSHIFT]:
                     shift = False
