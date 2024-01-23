@@ -1,4 +1,5 @@
 import pygame
+import os
 
 
 def drawing_platforms():
@@ -24,37 +25,41 @@ def drawing_platforms():
         x = 0  # на каждой новой строчке начинаем с нуля
 
 
+class PlayerTwo:
+    pass
+
+
 class PlayerOne(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__(player_sprites)
         self.trigger = 0
         self.frames = []
-        self.cur_frame = 8
+        self.cur_frame = 0
         self.cut_sheet()
-        self.image = pygame.Surface((48, 48))
+        self.image = pygame.Surface((26, 34))
         self.image.fill(pygame.Color(pygame.color.Color('black')))
-        self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 130))
+        self.image = pygame.transform.scale(self.frames[0], (26, 34))
+        self.image.set_colorkey((255, 255, 255))
         self.position = [50, 200]
-        self.rect = pygame.Rect(50, 200, 48, 48)
+        self.rect = pygame.Rect(50, 200, 26, 34)
         self.last_dir = 'right'
         self.yvel = 0
         self.onGround = False
         self.xvel = 0
         self.MOVE_SPEED = 5
-        self.JUMP_POWER = 15
+        self.JUMP_POWER = 10
         self.GRAVITY = 0.35
 
     def cut_sheet(self):
-        sheet = pygame.image.load('sprites\\Adventure_Character_Simple.png')
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // 8,
-                                sheet.get_height() // 20)
-
-        for j in range(20):
-            for w in range(8):
-                frame_location = (self.rect.w * w, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
+        for filename in os.walk('char_sprites'):
+            print(filename)
+            tmp = filename[2]
+            tmp.sort()
+            print(tmp)
+            for pic in sorted(tmp):
+                a = pygame.image.load(f'D:\\Git hub\\Project_LMS\\game_files\\char_sprites\\{pic}')
+                self.frames.append(a)
 
         self.onGround = False  # На земле ли я?
 
@@ -78,8 +83,9 @@ class PlayerOne(pygame.sprite.Sprite):
                 self.trigger = 4
             else:
                 self.trigger -= 1
-            #self.image = pygame.transform.flip(pygame.transform.scale(self.frames[self.cur_frame], (130, 130)), True,
-                                              # False)
+            self.image = pygame.transform.flip(pygame.transform.scale(self.frames[self.cur_frame], (26, 34)), True,
+                                               False)
+            self.image.set_colorkey((255, 255, 255))
 
         if key[pygame.K_d]:
             self.last_dir = 'right'
@@ -94,17 +100,33 @@ class PlayerOne(pygame.sprite.Sprite):
                 self.trigger = 4
             else:
                 self.trigger -= 1
-            #self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 130))
+            self.image = pygame.transform.scale(self.frames[self.cur_frame], (26, 34))
+            self.image.set_colorkey((255, 255, 255))
+
+        if key[pygame.K_f]:
+            if self.last_dir == 'right':
+                for i in range(20):
+                    if self.trigger == 0:
+                        if self.cur_frame == 8:
+                            self.cur_frame = 16
+                        elif self.cur_frame == 21:
+                            self.cur_frame = 16
+                        else:
+                            self.cur_frame += 1
+                        self.trigger = 4
+                    else:
+                        self.trigger -= 1
 
         if not (key[pygame.K_d] or key[pygame.K_a]):
             if self.last_dir == 'right':
                 self.cur_frame = 8
-                #self.image = pygame.transform.scale(self.frames[self.cur_frame], (130, 130))
+                self.image = pygame.transform.scale(self.frames[self.cur_frame], (26, 34))
+                self.image.set_colorkey((255, 255, 255))
             else:
                 self.cur_frame = 8
-                #self.image = pygame.transform.flip(pygame.transform.scale(self.frames[self.cur_frame], (130, 130)),
-                                                   #True,
-                                                   #False)
+                self.image = pygame.transform.flip(pygame.transform.scale(self.frames[self.cur_frame], (26, 34)), True,
+                                                   False)
+                self.image.set_colorkey((255, 255, 255))
             self.xvel = 0
 
         if not self.onGround:
@@ -168,10 +190,10 @@ if __name__ == '__main__':
 
     field = Field(screen)
     player_one = PlayerOne()
+    player_two = PlayerTwo()
 
     all_sprites.draw(field.screen)
     player_sprites.draw(screen)
-    pygame.display.flip()
     bg_changer = pygame.time.Clock()
     running = True
     while running:
@@ -187,7 +209,6 @@ if __name__ == '__main__':
                 field.screen.blit(field.bg, (0, 0))
                 all_sprites.draw(field.screen)
                 player_sprites.draw(screen)
-                pygame.display.flip()
             else:
                 field.frame = 0
                 field.bg = pygame.image.load("BG_frames\\Frame_" + str(field.frame) + ".gif").convert_alpha()
@@ -195,9 +216,6 @@ if __name__ == '__main__':
                 field.screen.blit(field.bg, (0, 0))
                 all_sprites.draw(field.screen)
                 player_sprites.draw(screen)
-                pygame.display.flip()
 
         player_one.update(all_sprites)
-        fps_timer = pygame.time.Clock()
-        # fps_timer.tick(60)
     pygame.quit()
