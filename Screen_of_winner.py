@@ -1,49 +1,7 @@
 import pygame as pg
 import sys
 from mainPro import split_animated_gif, load_image, Button
-
-screen_rect = (0, 0, 800, 600)
-GRAVITY = 0.5
-
-
-class Particle(pygame.sprite.Sprite):
-    # сгенерируем частицы разного размера
-    fire = [load_image("star.png")]
-    for scale in (5, 10, 20):
-        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
-
-    def __init__(self, pos, dx, dy):
-        super().__init__(all_sprites)
-        self.image = random.choice(self.fire)
-        self.rect = self.image.get_rect()
-
-        # у каждой частицы своя скорость — это вектор
-        self.velocity = [dx, dy]
-        # и свои координаты
-        self.rect.x, self.rect.y = pos
-
-        # гравитация будет одинаковой (значение константы)
-        self.gravity = GRAVITY
-
-    def update(self):
-        # применяем гравитационный эффект:
-        # движение с ускорением под действием гравитации
-        self.velocity[1] += self.gravity
-        # перемещаем частицу
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
-        # убиваем, если частица ушла за экран
-        if not self.rect.colliderect(screen_rect):
-            self.kill()
-
-
-def create_particles(position):
-    # количество создаваемых частиц
-    particle_count = 20
-    # возможные скорости
-    numbers = range(-5, 6)
-    for _ in range(particle_count):
-        Particle(position, random.choice(numbers), random.choice(numbers))
+import random
 
 
 class WinnerScreen:
@@ -74,28 +32,81 @@ if __name__ == '__main__':
     winner_screen = WinnerScreen(screen)
     clock = pg.time.Clock()
     fps = 50
-    sec = 0
     image = pg.transform.scale(load_image('winner.png', -1), (300, 150))
     corona = pg.transform.scale(load_image('corona_real.jpg', -1), (150, 115))
     font = pg.font.Font(None, 50)
-    text = font.render(f"'ник победителя'", True, (71, 116, 194))
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    text = font.render(f"'ник победителя'", True, (161, 26, 101))
     # корона победителя должна появляться и исчезать, чтобы было эффектнее, поэтому задаём таймер
     timer = 0
     # корона должна появляться на 1 секунду, мы ставим флажок
     flag = False
     # секунды, на которые появляется корона
     seconds = 0
+    pg.mixer.music.load("winner_music.mp3")
+    pg.mixer.music.play(-1)
+    last_screen_buttons_group = pg.sprite.Group()
+    home_button = Button(load_image('quit.png', -1), 1, 1,
+                         width // 2 - 350, height // 2 + 50, False, last_screen_buttons_group)
+    sprite_home = pg.sprite.Group()
+    # кнопка статистики
+    font = pg.font.Font(None, 30)
+    text_stat = font.render("статистика", True, (237, 54, 186))
+    button_stats = Button(load_image('button_stat.png', -1), 1, 1, width // 2 - 350, height // 2 - 100, False, last_screen_buttons_group)
     while running:
         winner_screen.renew()
+        last_screen_buttons_group.draw(screen)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = 0
-        if sec == 50:
-            for i in range(3):
-                create_particles((random.randint(0, 800), random.randint(0, 600)))
-            sec = 0
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                # если нажата кнопка 'активность', ты мы должны перейти к экрану итоговой статистики
+                if home_button.button_rect().collidepoint(pg.mouse.get_pos()):
+                    pass
+                elif button_stats.button_rect().collidepoint(pg.mouse.get_pos()):
+                    # если нажали на кнопку статистики, то вылезает экран с итоговой статистикой
+                    running_stat = 1
+                    button_home_2 = Button(load_image('Back.png', -1), 1, 1, 0, height // 2 + 100, False, sprite_home)
+                    # словарь самой статистики
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    sl_of_stat = {'нанесено урона': ['x', 'y'], 'количество выстрелов': ['x', 'y'], 'победитель': ['x', 'y']}
+                    while running_stat:
+                        for ev in pg.event.get():
+                            if ev.type == pg.QUIT:
+                                running_stat = 0
+                            elif ev.type == pg.MOUSEBUTTONDOWN:
+                                if button_home_2.button_rect().collidepoint(pg.mouse.get_pos()):
+                                    running_stat = 0
+                        screen.blit(load_image('fon_statist.jpg'), (0, 0))
+                        # прикрепляем всю статистику по очереди
+                        font = pg.font.Font(None, 30)
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        screen.blit(font.render("игрок 1", True, (160, 178, 222)), (width // 2 - 100, 50))
+                        screen.blit(font.render("игрок 2", True, (160, 178, 222)), (width // 2 + 100, 50))
+                        # координата разных текстов статистик
+                        y = 100
+                        for key in sl_of_stat.keys():
+                            screen.blit(font.render(key, True, (160, 178, 222)), (width // 2 - 375, y))
+                            y += 50
+                        # координаты информации для статистик
+                        x = width // 2 - 50
+                        y = 100
+                        for value in sl_of_stat.values():
+                            for i in range(2):
+                                if i % 2 == 0:
+                                    # для первого игрока
+                                    x = width // 2 - 75
+                                else:
+                                    # для второго игрока
+                                    x = width // 2 + 150
+                                screen.blit(font.render(value[i], True, (160, 178, 222)), (x, y))
+                            y += 50
+                        sprite_home.draw(screen)
+                        pg.display.flip()
+                        clock.tick(fps)
         screen.blit(image, (width // 2 - 125, height // 2 - 70))
         screen.blit(text, (width // 2 - 115, height // 2 - 20))
+        screen.blit(text_stat, (width // 2 - 335, height // 2 - 80))
         if timer == 50:
             flag = True
         if flag:
@@ -108,7 +119,5 @@ if __name__ == '__main__':
                 timer = 1
         else:
             timer += 1
-        sec += 1
-
         pg.display.flip()
         clock.tick(fps)
