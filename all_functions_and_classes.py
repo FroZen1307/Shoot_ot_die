@@ -1,3 +1,5 @@
+import random
+
 import pygame as pg
 import sys
 from PIL import Image
@@ -319,10 +321,10 @@ def MainScr():
                     if not trouble:
                         # записываем ники игроков в файл перед началом игры
                         with open('results.txt', 'w', encoding='utf-8') as statistic:
-                            statistic.write(f'{nick1} {nick2}')
+                            statistic.write(f'{nick1} {nick2} \n')
                     # начинаем игру
                     running = 1
-                    last_screen()
+                    game_process()
                 # если пользователь нажал на кнопку 'Back', то возвращаемся на главный экран
                 elif second_button_home.button_rect().collidepoint(pg.mouse.get_pos()):
                     running = 1
@@ -375,8 +377,9 @@ def last_screen():
     corona = pg.transform.scale(load_image('corona_real.jpg', -1), (150, 115))
     font = pg.font.Font(None, 50)
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    winner = []
-    text = font.render(f"'ник победителя'", True, (161, 26, 101))
+    # записываем ник победителя в центр экрана
+    with open('results.txt', encoding='utf-8') as file:
+        text = font.render(file.readlines()[1], True, (161, 26, 101))
     # корона победителя должна появляться и исчезать, чтобы было эффектнее, поэтому задаём таймер
     timer = 0
     # корона должна появляться на 1 секунду, мы ставим флажок
@@ -419,7 +422,10 @@ def last_screen():
                     button_home_2 = Button(load_image('Back.png', -1), 1, 1, 0, height // 2 + 100, False, sprite_home)
                     # словарь самой статистики
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    sl_of_stat = {'нанесено урона': ['x', 'y'], 'количество выстрелов': ['x', 'y'], 'победитель': ['x', 'y']}
+                    with open('results.txt', encoding='utf-8') as file:
+                        file = file.readlines()
+                        winner = file[1]
+                        sl_of_stat = {'нанесено урона': [file[3].split()[0], file[3].split()[1]], 'количество выстрелов': [file[2].split()[0], file[2].split()[1]]}
                     while running_stat:
                         for ev in pg.event.get():
                             if ev.type == pg.QUIT:
@@ -432,7 +438,7 @@ def last_screen():
                         font = pg.font.Font(None, 30)
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         screen.blit(font.render(players[0], True, (160, 178, 222)), (width // 2 - 100, 50))
-                        screen.blit(font.render(players[1], True, (160, 178, 222)), (width // 2 + 100, 50))
+                        screen.blit(font.render(players[1], True, (160, 178, 222)), (width // 2 + 140, 50))
                         # координата разных текстов статистик
                         y = 100
                         for key in sl_of_stat.keys():
@@ -451,11 +457,16 @@ def last_screen():
                                     x = width // 2 + 150
                                 screen.blit(font.render(value[i], True, (160, 178, 222)), (x, y))
                             y += 50
+                        font = pg.font.Font(None, 30)
+                        st = font.render('Победитель', True, (160, 178, 222))
+                        win = font.render(winner, True, (160, 178, 222))
+                        screen.blit(win, (x - 200, y))
+                        screen.blit(st, (20, y))
                         sprite_home.draw(screen)
                         pg.display.flip()
                         clock.tick(fps)
         screen.blit(image, (width // 2 - 125, height // 2 - 70))
-        screen.blit(text, (width // 2 - 115, height // 2 - 20))
+        screen.blit(text, (width // 2 - 80, height // 2 - 15))
         screen.blit(text_stat, (width // 2 - 335, height // 2 - 80))
         # если прошла одна секунда, то должна появиться корона
         if timer == 50:
@@ -474,3 +485,52 @@ def last_screen():
         clock.tick(fps)
     if return_home:
         MainScr()
+
+
+def game_process():
+    pg.init()
+    size = width, height = 800, 400
+    screen = pg.display.set_mode(size)
+    pg.display.set_caption('Shoot or die')
+
+    pressed_start = False
+    running = -1
+    fps = 10
+    clock = pg.time.Clock()
+    x_pos = 0
+    v = 10  # п
+    all_sprites = pg.sprite.Group()
+    sprite_home = pg.sprite.Group()
+
+    while running:
+        screen.fill((0, 0, 0))
+        font = pg.font.Font(None, 40)
+        txt1 = font.render('нажмите на BACKSPACE чтобы победил первый игрок', True, (100, 100, 100))
+        txt2 = font.render('или RIGHT_SHIFT чтобы победил второй игрок', True, (100, 100, 100))
+        screen.blit(txt1, (width // 2 - 350, 50))
+        screen.blit(txt2, (width // 2 - 350, 100))
+        for event in pg.event.get():
+            # записываем ник победителя и урон в results.txt (пока нет игрового процесса, то урон и количество выстрелов рандомно)
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_BACKSPACE:
+                    with open('results.txt', encoding='utf-8') as stat:
+                        winner = stat.readlines()[0].split()[0]
+                    with open('results.txt', 'a', encoding='utf-8') as stat:
+                        stat.write(winner + '\n')
+                    with open('results.txt', 'a', encoding='utf-8') as stat:
+                        stat.write(str(random.randint(1, 3)) + ' ' + str(random.randint(1, 3)) + '\n')
+                        stat.write(str(random.randint(100, 300)) + ' ' + str(random.randint(100, 300)) + '\n')
+                    running = 0
+                    last_screen()
+                elif event.key == pg.K_RSHIFT:
+                    with open('results.txt', encoding='utf-8') as stat:
+                        winner = stat.readlines()[0].split()[1]
+                    with open('results.txt', 'a', encoding='utf-8') as stat:
+                        stat.write(winner + '\n')
+                    with open('results.txt', 'a', encoding='utf-8') as stat:
+                        stat.write(str(random.randint(1, 3)) + ' ' + str(random.randint(1, 3)) + '\n')
+                        stat.write(str(random.randint(100, 300)) + ' ' + str(random.randint(100, 300)) + '\n')
+                    running = 0
+                    last_screen()
+        pg.display.flip()
+        clock.tick(fps)
